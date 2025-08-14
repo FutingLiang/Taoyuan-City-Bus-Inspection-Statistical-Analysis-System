@@ -517,24 +517,35 @@
                     maintainAspectRatio: false,
                     layout: {
                         padding: {
-                            top: 30,  // 增加上方padding，確保數值標籤不被裁切
+                            top: 30,
                             right: 10,
-                            bottom: 5,
+                            bottom: 10,
                             left: 10
                         }
                     },
                     plugins: {
                         legend: { display: false },
                         datalabels: {
-                            anchor: 'end',
-                            align: 'top',
-                            color: '#333',
+                            // ========== 數字標籤設定區域 ==========
+                            anchor: 'end',        // 錨點位置：'start'(底部), 'center'(中間), 'end'(頂部)
+                            align: 'top',         // 對齊方式：'top'(上方), 'bottom'(下方), 'center'(中心), 'start', 'end'
+                            offset: 5,            // 偏移距離（像素）
+                            color: '#333',        // 文字顏色
                             font: {
-                                weight: 'bold',
-                                size: 18
+                                weight: 'bold',   // 字體粗細：'normal', 'bold'
+                                size: 14          // 字體大小
                             },
-                            formatter: (value) => value,
-                            clip: false  // 防止標籤被裁切
+                            formatter: (value) => value,  // 格式化函數，可改為：
+                                                          // (value) => value + '次'  顯示「18次」
+                                                          // (value) => '(' + value + ')'  顯示「(18)」
+                            clip: false,          // false = 防止被裁切
+                            display: true,        // true = 顯示, false = 隱藏
+                            // backgroundColor: 'rgba(255, 255, 255, 0.8)',  // 背景顏色（選用）
+                            // borderColor: '#666',                          // 邊框顏色（選用）
+                            // borderWidth: 1,                               // 邊框寬度（選用）
+                            // borderRadius: 4,                              // 圓角半徑（選用）
+                            // padding: 4,                                   // 內邊距（選用）
+                            // ========== 設定區域結束 ==========
                         }
                     },
                     scales: {
@@ -542,7 +553,6 @@
                             beginAtZero: true,
                             ticks: { stepSize: 1 },
                             max: function(context) {
-                                // 設定最大值為最大數據值的 1.2 倍，確保標籤有空間
                                 const values = context.chart.data.datasets[0].data;
                                 const max = Math.max(...values);
                                 return Math.ceil(max * 1.2);
