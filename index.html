@@ -362,47 +362,62 @@
             };
             
             // 定義要檢查的違規項目
+            // 注意：不同欄位的判定邏輯不同
             const violationFields = {
-                'A2 路線圖': '未張貼路線圖',
-                'A3 意見箱': '無意見箱',
-                'A4 電話': '無服務電話',
-                'B3 態度': '駕駛態度不佳',
-                'B4 吸菸': '駕駛吸菸',
-                'C1 早發': '早發',
-                'C2 誤點': '誤點',
-                'C3 脫班': '脫班',
-                'C4 漏班': '漏班',
-                'C5 紀錄器': '行車紀錄器異常',
-                'C6 過站': '過站不停',
-                'C7 依路線': '未依路線行駛',
-                'C8 拒載': '拒載',
-                'C9 未停妥': '未停妥',
-                'C10 關車門': '未等乘客坐穩關門',
-                'C11 闖紅燈': '闖紅燈',
-                'C12 佔用': '佔用車道',
-                'C13 延滯': '延滯發車'
+                // 這些欄位 0 代表缺失（沒有該設備）
+                equipment: {
+                    'A2 路線圖': '未張貼路線圖',
+                    'A3 意見箱': '無意見箱',
+                    'A4 電話': '無服務電話'
+                },
+                // 這些欄位 1 代表違規（有不當行為）
+                behavior: {
+                    'B4 吸菸': '駕駛吸菸',
+                    'C1 早發': '早發',
+                    'C2 誤點': '誤點',
+                    'C3 脫班': '脫班',
+                    'C4 漏班': '漏班',
+                    'C5 紀錄器': '行車紀錄器異常',
+                    'C6 過站': '過站不停',
+                    'C7 依路線': '未依路線行駛',
+                    'C8 拒載': '拒載',
+                    'C9 未停妥': '未停妥',
+                    'C10 關車門': '未等乘客坐穩關門',
+                    'C11 闖紅燈': '闖紅燈',
+                    'C12 佔用': '佔用車道',
+                    'C13 延滯': '延滯發車'
+                }
             };
             
             // 統計各項數據
             data.forEach(row => {
                 // 客運公司統計
-                const company = row['客運公司'] || '未知';
+                const company = row['公司'] || row['客運公司'] || '未知';
                 stats.companies[company] = (stats.companies[company] || 0) + 1;
                 
                 // 區域統計
                 const area = row['區域'] || '未知';
                 stats.areas[area] = (stats.areas[area] || 0) + 1;
                 
-                // 違規項目統計
-                for (let field in violationFields) {
-                    if (row[field] === '0' || row[field] === 0 || row[field] === '1') {
-                        const fieldName = violationFields[field];
+                // 違規項目統計 - 設備類（0=缺失）
+                for (let field in violationFields.equipment) {
+                    if (row[field] === '0' || row[field] === 0) {
+                        const fieldName = violationFields.equipment[field];
                         if (!stats.violations[fieldName]) {
                             stats.violations[fieldName] = 0;
                         }
-                        if (row[field] === '0' || row[field] === 0) {
-                            stats.violations[fieldName]++;
+                        stats.violations[fieldName]++;
+                    }
+                }
+                
+                // 違規項目統計 - 行為類（1=違規）
+                for (let field in violationFields.behavior) {
+                    if (row[field] === '1' || row[field] === 1) {
+                        const fieldName = violationFields.behavior[field];
+                        if (!stats.violations[fieldName]) {
+                            stats.violations[fieldName] = 0;
                         }
+                        stats.violations[fieldName]++;
                     }
                 }
                 
@@ -600,9 +615,18 @@
             
             data.forEach(row => {
                 const violations = [];
-                for (let field in violationFields) {
+                
+                // 檢查設備類違規（0=缺失）
+                for (let field in violationFields.equipment) {
                     if (row[field] === '0' || row[field] === 0) {
-                        violations.push(violationFields[field]);
+                        violations.push(violationFields.equipment[field]);
+                    }
+                }
+                
+                // 檢查行為類違規（1=違規）
+                for (let field in violationFields.behavior) {
+                    if (row[field] === '1' || row[field] === 1) {
+                        violations.push(violationFields.behavior[field]);
                     }
                 }
                 
@@ -636,17 +660,28 @@
             analysisData.forEach(row => {
                 const violations = [];
                 const violationFields = {
-                    'A2 路線圖': '未張貼路線圖',
-                    'A3 意見箱': '無意見箱',
-                    'B3 態度': '駕駛態度不佳',
-                    'B4 吸菸': '駕駛吸菸',
-                    'C5 紀錄器': '行車紀錄器異常',
-                    'C6 過站': '過站不停'
+                    equipment: {
+                        'A2 路線圖': '未張貼路線圖',
+                        'A3 意見箱': '無意見箱'
+                    },
+                    behavior: {
+                        'B4 吸菸': '駕駛吸菸',
+                        'C5 紀錄器': '行車紀錄器異常',
+                        'C6 過站': '過站不停'
+                    }
                 };
                 
-                for (let field in violationFields) {
+                // 檢查設備類違規
+                for (let field in violationFields.equipment) {
                     if (row[field] === '0' || row[field] === 0) {
-                        violations.push(violationFields[field]);
+                        violations.push(violationFields.equipment[field]);
+                    }
+                }
+                
+                // 檢查行為類違規
+                for (let field in violationFields.behavior) {
+                    if (row[field] === '1' || row[field] === 1) {
+                        violations.push(violationFields.behavior[field]);
                     }
                 }
                 
@@ -690,30 +725,42 @@
             
             const violationStats = {};
             const allViolationFields = {
-                'A2 路線圖': '未張貼路線圖',
-                'A3 意見箱': '無意見箱',
-                'A4 電話': '無服務電話',
-                'B3 態度': '駕駛態度不佳',
-                'B4 吸菸': '駕駛吸菸',
-                'C1 早發': '早發',
-                'C2 誤點': '誤點',
-                'C3 脫班': '脫班',
-                'C4 漏班': '漏班',
-                'C5 紀錄器': '行車紀錄器異常',
-                'C6 過站': '過站不停',
-                'C7 依路線': '未依路線行駛',
-                'C8 拒載': '拒載',
-                'C9 未停妥': '未停妥',
-                'C10 關車門': '未等乘客坐穩關門',
-                'C11 闖紅燈': '闖紅燈',
-                'C12 佔用': '佔用車道',
-                'C13 延滯': '延滯發車'
+                equipment: {
+                    'A2 路線圖': '未張貼路線圖',
+                    'A3 意見箱': '無意見箱',
+                    'A4 電話': '無服務電話'
+                },
+                behavior: {
+                    'B4 吸菸': '駕駛吸菸',
+                    'C1 早發': '早發',
+                    'C2 誤點': '誤點',
+                    'C3 脫班': '脫班',
+                    'C4 漏班': '漏班',
+                    'C5 紀錄器': '行車紀錄器異常',
+                    'C6 過站': '過站不停',
+                    'C7 依路線': '未依路線行駛',
+                    'C8 拒載': '拒載',
+                    'C9 未停妥': '未停妥',
+                    'C10 關車門': '未等乘客坐穩關門',
+                    'C11 闖紅燈': '闖紅燈',
+                    'C12 佔用': '佔用車道',
+                    'C13 延滯': '延滯發車'
+                }
             };
             
             analysisData.forEach(row => {
-                for (let field in allViolationFields) {
+                // 檢查設備類違規（0=缺失）
+                for (let field in allViolationFields.equipment) {
                     if (row[field] === '0' || row[field] === 0) {
-                        const fieldName = allViolationFields[field];
+                        const fieldName = allViolationFields.equipment[field];
+                        violationStats[fieldName] = (violationStats[fieldName] || 0) + 1;
+                    }
+                }
+                
+                // 檢查行為類違規（1=違規）
+                for (let field in allViolationFields.behavior) {
+                    if (row[field] === '1' || row[field] === 1) {
+                        const fieldName = allViolationFields.behavior[field];
                         violationStats[fieldName] = (violationStats[fieldName] || 0) + 1;
                     }
                 }
