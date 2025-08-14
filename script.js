@@ -285,8 +285,8 @@ function updateCharts(stats) {
                 },
                 x: {
                     ticks: {
-                        color: '#7f8c8d',
-                        font: { size: 11 },
+                        color: '#0f0d0d',
+                        font: { size: 14, weight: 'bold' },
                         maxRotation: 45
                     },
                     grid: {
@@ -413,7 +413,7 @@ function updateCharts(stats) {
                     align: 'end',
                     offset: 8,
                     color: '#2c3e50',
-                    font: { weight: 'bold', size: 12 },
+                    font: { weight: 'bold', size: 14 },
                     formatter: (value) => value,
                     clip: false
                 }
@@ -424,7 +424,7 @@ function updateCharts(stats) {
                     ticks: { 
                         stepSize: 1,
                         color: '#7f8c8d',
-                        font: { size: 11 }
+                        font: { size: 13, weight: 'bold' }
                     },
                     grid: {
                         color: 'rgba(0, 0, 0, 0.05)',
@@ -438,8 +438,8 @@ function updateCharts(stats) {
                 },
                 y: {
                     ticks: {
-                        color: '#7f8c8d',
-                        font: { size: 10 }
+                        color: '#0f0d0d',
+                        font: { size: 13, weight: 'bold' }
                     },
                     grid: { display: false }
                 }
@@ -481,12 +481,12 @@ function updateCharts(stats) {
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            layout: { padding: 30 },
+            layout: { padding: 50 },
             plugins: {
                 legend: {
                     labels: {
                         color: '#2c3e50',
-                        font: { size: 12, weight: 'bold' }
+                        font: { size: 14, weight: 'bold' }
                     }
                 },
                 tooltip: {
@@ -511,13 +511,21 @@ function updateCharts(stats) {
                     borderRadius: 4,
                     borderWidth: 1,
                     color: '#2c3e50',
-                    font: { weight: 'bold', size: 10 },
+                    font: { weight: 'bold', size: 11 },
                     formatter: (value) => value,
-                    padding: 4,
+                    padding: 3,
                     clip: false,
-                    anchor: 'end',
-                    align: 'end',
-                    offset: 8
+                    anchor: 'center',
+                    align: 'center',
+                    offset: 0,
+                    display: function(context) {
+                        // 安全檢查並只在數值大於0時顯示
+                        try {
+                            return context && context.parsed && typeof context.parsed.r === 'number' && context.parsed.r > 0;
+                        } catch (e) {
+                            return true; // 如果出錯，預設顯示標籤
+                        }
+                    }
                 }
             },
             scales: {
@@ -527,9 +535,9 @@ function updateCharts(stats) {
                     ticks: {
                         stepSize: Math.ceil(stats.total / 5),
                         color: '#7f8c8d',
-                        font: { size: 10 },
+                        font: { size: 12 },
                         backdropColor: 'rgba(255, 255, 255, 0.8)',
-                        backdropPadding: 2
+                        backdropPadding: 3
                     },
                     grid: {
                         color: 'rgba(0, 0, 0, 0.1)'
@@ -539,7 +547,9 @@ function updateCharts(stats) {
                     },
                     pointLabels: {
                         color: '#2c3e50',
-                        font: { size: 11, weight: '600' }
+                        font: { size: 13, weight: '600' },
+                        padding: 10,
+                        centerPointLabels: false
                     }
                 }
             }
