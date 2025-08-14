@@ -8,7 +8,483 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft JhengHei', 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 25px;
+            padding: 40px;
+            box-shadow: 0 25px 80px rgba(0,0,0,0.15);
+            backdrop-filter: blur(10px);
+        }
+
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 40px;
+            font-size: 2.8em;
+            font-weight: 700;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .upload-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 20px;
+            padding: 50px;
+            text-align: center;
+            margin-bottom: 40px;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .upload-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .upload-section:hover::before {
+            left: 100%;
+        }
+
+        .upload-section:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .upload-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 15px;
+            padding: 20px 50px;
+            background: white;
+            color: #667eea;
+            border-radius: 50px;
+            font-size: 1.3em;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+            border: 3px solid transparent;
+            position: relative;
+            z-index: 1;
+        }
+
+        .upload-btn:hover {
+            transform: scale(1.08);
+            box-shadow: 0 12px 35px rgba(0,0,0,0.25);
+            border-color: rgba(255,255,255,0.3);
+        }
+
+        .upload-btn i {
+            font-size: 1.2em;
+        }
+
+        .file-info {
+            margin-top: 25px;
+            color: white;
+            font-size: 1.2em;
+            font-weight: 500;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border-left: 6px solid #667eea;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.12);
+            border-left-color: #764ba2;
+        }
+
+        .stat-card h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .stat-card h3 i {
+            font-size: 1.3em;
+        }
+
+        .stat-value {
+            font-size: 3em;
+            font-weight: 800;
+            color: #2c3e50;
+            margin: 10px 0;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stat-subtitle {
+            color: #7f8c8d;
+            font-size: 1em;
+            font-weight: 500;
+        }
+
+        .chart-container {
+            background: white;
+            border-radius: 20px;
+            padding: 35px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+            transition: all 0.3s ease;
+            border: 1px solid rgba(102, 126, 234, 0.1);
+        }
+
+        .chart-container:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.12);
+        }
+
+        .chart-title {
+            color: #2c3e50;
+            font-size: 1.6em;
+            margin-bottom: 25px;
+            text-align: center;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid #f8f9fa;
+            position: relative;
+        }
+
+        .chart-title::after {
+            content: '';
+            position: absolute;
+            bottom: -3px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60px;
+            height: 3px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            border-radius: 2px;
+        }
+
+        .chart-title i {
+            color: #667eea;
+            font-size: 0.9em;
+        }
+
+        .charts-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(550px, 1fr));
+            gap: 35px;
+            margin-bottom: 40px;
+        }
+
+        .chart-wrapper {
+            position: relative;
+            height: 450px;
+            padding: 20px;
+        }
+
+        canvas {
+            max-height: 100% !important;
+            border-radius: 10px;
+        }
+
+        .table-container {
+            background: white;
+            border-radius: 20px;
+            padding: 35px;
+            margin-bottom: 40px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+            overflow: hidden;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.95em;
+        }
+
+        th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 18px 15px;
+            text-align: left;
+            font-weight: 700;
+            font-size: 0.9em;
+            letter-spacing: 0.5px;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        td {
+            padding: 15px;
+            border-bottom: 1px solid #ecf0f1;
+            transition: background-color 0.2s ease;
+        }
+
+        tr:hover {
+            background: linear-gradient(90deg, #f8f9fa, #e9ecef);
+        }
+
+        tr:nth-child(even) {
+            background: #fafbfc;
+        }
+
+        .violation-row {
+            border-left: 4px solid #e74c3c;
+            background: rgba(231, 76, 60, 0.05);
+        }
+
+        .violation {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.85em;
+            margin: 2px;
+            display: inline-block;
+            box-shadow: 0 2px 8px rgba(255, 107, 107, 0.3);
+        }
+
+        .normal {
+            background: linear-gradient(135deg, #00b894, #00a085);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.85em;
+            margin: 2px;
+            display: inline-block;
+            box-shadow: 0 2px 8px rgba(0, 184, 148, 0.3);
+        }
+
+        .guidance-status {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.85em;
+            display: inline-block;
+        }
+
+        .guidance-status.good {
+            background: linear-gradient(135deg, #00b894, #00a085);
+            color: white;
+            box-shadow: 0 2px 8px rgba(0, 184, 148, 0.3);
+        }
+
+        .guidance-status.warning {
+            background: linear-gradient(135deg, #fdcb6e, #e17055);
+            color: white;
+            box-shadow: 0 2px 8px rgba(253, 203, 110, 0.3);
+        }
+
+        .guidance-status.bad {
+            background: linear-gradient(135deg, #ff7675, #e84393);
+            color: white;
+            box-shadow: 0 2px 8px rgba(255, 118, 117, 0.3);
+        }
+
+        .remarks-cell {
+            max-width: 200px;
+            word-wrap: break-word;
+            font-size: 0.9em;
+            color: #5a6c7d;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .export-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 18px 40px;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.2em;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            margin: 30px auto;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .export-btn:hover {
+            transform: scale(1.05) translateY(-2px);
+            box-shadow: 0 12px 35px rgba(102, 126, 234, 0.4);
+        }
+
+        .export-btn i {
+            font-size: 1.1em;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+            margin-left: 10px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .slide-in {
+            animation: slideInUp 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: #ecf0f1;
+            border-radius: 3px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            border-radius: 3px;
+            transition: width 0.3s ease;
+        }
+
+        /* 響應式設計 */
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+                margin: 10px;
+            }
+            
+            h1 {
+                font-size: 2.2em;
+            }
+            
+            .charts-row {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .chart-wrapper {
+                height: 350px;
+            }
+            
+            .upload-section {
+                padding: 30px 20px;
+            }
+            
+            .upload-btn {
+                padding: 15px 30px;
+                font-size: 1.1em;
+            }
+
+            .table-wrapper {
+                font-size: 0.85em;
+            }
+
+            .remarks-cell {
+                max-width: 150px;
+            }
+        }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -53,14 +529,26 @@
             <div class="charts-row">
                 <div class="chart-container slide-in">
                     <div class="chart-title">
-                        <i class="fas fa-exclamation-triangle"></i>
-                        主要違規項目統計
+                        <i class="fas fa-hand-point-right"></i>
+                        H1指差執行情況統計
                     </div>
                     <div class="chart-wrapper">
-                        <canvas id="violationChart"></canvas>
+                        <canvas id="guidanceChart"></canvas>
                     </div>
                 </div>
                 
+                <div class="chart-container slide-in">
+                    <div class="chart-title">
+                        <i class="fas fa-comment-dots"></i>
+                        H2備註特殊狀況統計
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="remarksChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="charts-row">
                 <div class="chart-container slide-in">
                     <div class="chart-title">
                         <i class="fas fa-shield-alt"></i>
@@ -76,7 +564,7 @@
             <div class="table-container slide-in">
                 <div class="chart-title">
                     <i class="fas fa-table"></i>
-                    違規明細表
+                    完整稽查記錄表
                 </div>
                 <div class="table-wrapper">
                     <table id="violationTable">
@@ -88,6 +576,8 @@
                                 <th><i class="fas fa-building"></i> 公司</th>
                                 <th><i class="fas fa-car"></i> 車牌</th>
                                 <th><i class="fas fa-user"></i> 駕駛</th>
+                                <th><i class="fas fa-hand-point-right"></i> H1指差</th>
+                                <th><i class="fas fa-comment-dots"></i> H2備註</th>
                                 <th><i class="fas fa-exclamation-circle"></i> 主要違規項目</th>
                             </tr>
                         </thead>
@@ -103,6 +593,897 @@
         </div>
     </div>
     
-    <script src="script.js"></script>
+    <script>
+        let analysisData = null;
+        let charts = {};
+
+        // 註冊 DataLabels 插件
+        Chart.register(ChartDataLabels);
+
+        // 設定全域圖表預設值
+        Chart.defaults.font.family = "'Microsoft JhengHei', 'Segoe UI', Arial, sans-serif";
+        Chart.defaults.font.size = 12;
+        Chart.defaults.color = '#2c3e50';
+
+        // 增強的顏色調色盤
+        const colorPalettes = {
+            primary: [
+                'rgba(102, 126, 234, 0.8)',
+                'rgba(118, 75, 162, 0.8)',
+                'rgba(240, 147, 251, 0.8)',
+                'rgba(245, 87, 108, 0.8)',
+                'rgba(79, 172, 254, 0.8)',
+                'rgba(0, 242, 254, 0.8)',
+                'rgba(255, 107, 107, 0.8)',
+                'rgba(78, 205, 196, 0.8)',
+                'rgba(69, 183, 209, 0.8)',
+                'rgba(150, 206, 180, 0.8)',
+                'rgba(254, 202, 87, 0.8)',
+                'rgba(255, 159, 243, 0.8)'
+            ],
+            borders: [
+                'rgba(102, 126, 234, 1)',
+                'rgba(118, 75, 162, 1)',
+                'rgba(240, 147, 251, 1)',
+                'rgba(245, 87, 108, 1)',
+                'rgba(79, 172, 254, 1)',
+                'rgba(0, 242, 254, 1)',
+                'rgba(255, 107, 107, 1)',
+                'rgba(78, 205, 196, 1)',
+                'rgba(69, 183, 209, 1)',
+                'rgba(150, 206, 180, 1)',
+                'rgba(254, 202, 87, 1)',
+                'rgba(255, 159, 243, 1)'
+            ]
+        };
+
+        document.getElementById('fileInput').addEventListener('change', handleFileUpload);
+
+        function handleFileUpload(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            const fileInfo = document.getElementById('fileInfo');
+            fileInfo.innerHTML = `<i class="fas fa-spinner fa-spin"></i> 正在處理: ${file.name}`;
+            
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { 
+                        type: 'array',
+                        cellDates: true,
+                        dateNF: 'yyyy/mm/dd'
+                    });
+                    
+                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const jsonData = XLSX.utils.sheet_to_json(firstSheet, {
+                        raw: false,
+                        dateNF: 'yyyy/mm/dd'
+                    });
+                    
+                    const realData = jsonData.filter(row => row['編號']);
+                    
+                    if (realData.length === 0) {
+                        alert('找不到有效的稽查資料！');
+                        return;
+                    }
+                    
+                    analyzeData(realData);
+                    
+                    document.getElementById('results').classList.remove('hidden');
+                    document.getElementById('results').classList.add('fade-in');
+                    
+                    fileInfo.innerHTML = `
+                        <i class="fas fa-check-circle" style="color: #00b894;"></i> 
+                        成功載入 ${file.name} - 共 ${realData.length} 筆稽查資料
+                    `;
+                    
+                } catch (error) {
+                    alert('檔案處理錯誤: ' + error.message);
+                    console.error(error);
+                }
+            };
+            
+            reader.readAsArrayBuffer(file);
+        }
+
+        function analyzeData(data) {
+            analysisData = data;
+            
+            const stats = {
+                total: data.length,
+                companies: {},
+                areas: {},
+                violations: {},
+                safety: {
+                    normal: 0, warning: 0, breaker: 0, sticker: 0, font: 0,
+                    extinguisher: 0, pressure: 0, placement: 0, instruction: 0, seat: 0
+                },
+                // 新增H1指差統計
+                guidance: {
+                    '1': 0, // 皆有執行
+                    '2': 0, // 部分執行
+                    '3': 0, // 皆未執行
+                    '9': 0  // 不適用
+                },
+                // 新增H2備註關鍵字統計
+                remarks: {
+                    '慢': 0,      // 慢看停
+                    '無': 0,      // 未執行
+                    '線': 0,      // 未依路線行駛
+                    '遊': 0,      // 遊覽車型
+                    '其他': 0     // 其他備註
+                }
+            };
+            
+            const violationFields = {
+                equipment: {
+                    'A2 路線圖': '未張貼路線圖',
+                    'A3 意見箱': '無意見箱',
+                    'A4 電話': '無服務電話'
+                },
+                behavior: {
+                    'B4 吸菸': '駕駛吸菸',
+                    'C1 早發': '早發',
+                    'C2 誤點': '誤點',
+                    'C3 脫班': '脫班',
+                    'C4 漏班': '漏班',
+                    'C5 紀錄器': '行車紀錄器異常',
+                    'C6 過站': '過站不停',
+                    'C7 依路線': '未依路線行駛',
+                    'C8 拒載': '拒載',
+                    'C9 未停妥': '未停妥',
+                    'C10 關車門': '未等乘客坐穩關門',
+                    'C11 闖紅燈': '闖紅燈',
+                    'C12 佔用': '佔用車道',
+                    'C13 延滯': '延滯發車'
+                }
+            };
+            
+            data.forEach(row => {
+                const company = row['公司'] || row['客運公司'] || '未知';
+                stats.companies[company] = (stats.companies[company] || 0) + 1;
+                
+                const area = row['區域'] || '未知';
+                stats.areas[area] = (stats.areas[area] || 0) + 1;
+                
+                // 分析H1指差
+                const guidance = row['H1 指差'];
+                if (guidance && stats.guidance.hasOwnProperty(guidance)) {
+                    stats.guidance[guidance]++;
+                }
+                
+                // 分析H2備註
+                const remarks = row['H2 備註'] || '';
+                if (remarks) {
+                    if (remarks.includes('慢')) stats.remarks['慢']++;
+                    if (remarks.includes('無')) stats.remarks['無']++;
+                    if (remarks.includes('線')) stats.remarks['線']++;
+                    if (remarks.includes('遊')) stats.remarks['遊']++;
+                    if (remarks && !remarks.includes('慢') && !remarks.includes('無') && 
+                        !remarks.includes('線') && !remarks.includes('遊')) {
+                        stats.remarks['其他']++;
+                    }
+                }
+                
+                for (let field in violationFields.equipment) {
+                    if (row[field] === '0' || row[field] === 0) {
+                        const fieldName = violationFields.equipment[field];
+                        stats.violations[fieldName] = (stats.violations[fieldName] || 0) + 1;
+                    }
+                }
+                
+                for (let field in violationFields.behavior) {
+                    if (row[field] === '1' || row[field] === 1) {
+                        const fieldName = violationFields.behavior[field];
+                        stats.violations[fieldName] = (stats.violations[fieldName] || 0) + 1;
+                    }
+                }
+                
+                if (row['D1 正常'] === '1' || row['D1 正常'] === 1) stats.safety.normal++;
+                if (row['D2 警告'] === '1' || row['D2 警告'] === 1) stats.safety.warning++;
+                if (row['D3 擊破器'] === '1' || row['D3 擊破器'] === 1) stats.safety.breaker++;
+                if (row['D4 貼紙'] === '1' || row['D4 貼紙'] === 1) stats.safety.sticker++;
+                if (row['D5 字體'] === '1' || row['D5 字體'] === 1) stats.safety.font++;
+                if (row['E1 有效期'] === '1' || row['E1 有效期'] === 1) stats.safety.extinguisher++;
+                if (row['E2 壓力針'] === '1' || row['E2 壓力針'] === 1) stats.safety.pressure++;
+                if (row['E3 放置'] === '1' || row['E3 放置'] === 1) stats.safety.placement++;
+                if (row['E4 說明'] === '1' || row['E4 說明'] === 1) stats.safety.instruction++;
+                if (row['F1 座椅'] === '1' || row['F1 座椅'] === 1) stats.safety.seat++;
+            });
+            
+            updateStatsCards(stats);
+            updateCharts(stats);
+            updateViolationTable(data, violationFields);
+        }
+
+        function updateStatsCards(stats) {
+            const statsGrid = document.getElementById('statsGrid');
+            
+            const totalViolations = Object.values(stats.violations).reduce((a, b) => a + b, 0);
+            const violationRate = ((totalViolations / (stats.total * 18)) * 100).toFixed(1);
+            
+            // 計算指差執行率
+            const guidanceExecuted = stats.guidance['1'] + stats.guidance['2'];
+            const guidanceRate = ((guidanceExecuted / stats.total) * 100).toFixed(1);
+            
+            statsGrid.innerHTML = `
+                <div class="stat-card fade-in">
+                    <h3><i class="fas fa-clipboard-list"></i> 總稽查次數</h3>
+                    <div class="stat-value">${stats.total}</div>
+                    <div class="stat-subtitle">筆資料</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 100%"></div>
+                    </div>
+                </div>
+                <div class="stat-card fade-in">
+                    <h3><i class="fas fa-building"></i> 涵蓋客運公司</h3>
+                    <div class="stat-value">${Object.keys(stats.companies).length}</div>
+                    <div class="stat-subtitle">家業者</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${Math.min(Object.keys(stats.companies).length * 10, 100)}%"></div>
+                    </div>
+                </div>
+                <div class="stat-card fade-in">
+                    <h3><i class="fas fa-map-marked-alt"></i> 稽查區域</h3>
+                    <div class="stat-value">${Object.keys(stats.areas).length}</div>
+                    <div class="stat-subtitle">個行政區</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${Math.min(Object.keys(stats.areas).length * 8, 100)}%"></div>
+                    </div>
+                </div>
+                <div class="stat-card fade-in">
+                    <h3><i class="fas fa-exclamation-triangle"></i> 違規發現率</h3>
+                    <div class="stat-value">${violationRate}%</div>
+                    <div class="stat-subtitle">需改善項目</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${violationRate}%"></div>
+                    </div>
+                </div>
+                <div class="stat-card fade-in">
+                    <h3><i class="fas fa-hand-point-right"></i> 指差執行率</h3>
+                    <div class="stat-value">${guidanceRate}%</div>
+                    <div class="stat-subtitle">有執行指差</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${guidanceRate}%"></div>
+                    </div>
+                </div>
+                <div class="stat-card fade-in">
+                    <h3><i class="fas fa-comment-dots"></i> 備註記錄</h3>
+                    <div class="stat-value">${Object.values(stats.remarks).reduce((a, b) => a + b, 0)}</div>
+                    <div class="stat-subtitle">項特殊狀況</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${Math.min((Object.values(stats.remarks).reduce((a, b) => a + b, 0) / stats.total) * 100, 100)}%"></div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function updateCharts(stats) {
+            Object.values(charts).forEach(chart => chart.destroy());
+            charts = {};
+            
+            // 客運公司圖表
+            const companyCtx = document.getElementById('companyChart').getContext('2d');
+            const companyData = Object.entries(stats.companies).sort((a, b) => b[1] - a[1]);
+            
+            charts.company = new Chart(companyCtx, {
+                type: 'bar',
+                data: {
+                    labels: companyData.map(item => item[0]),
+                    datasets: [{
+                        label: '稽查次數',
+                        data: companyData.map(item => item[1]),
+                        backgroundColor: colorPalettes.primary.slice(0, companyData.length),
+                        borderColor: colorPalettes.borders.slice(0, companyData.length),
+                        borderWidth: 2,
+                        borderRadius: 8,
+                        borderSkipped: false,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    layout: {
+                        padding: { top: 40, right: 20, bottom: 10, left: 10 }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            titleColor: '#fff',
+                            bodyColor: '#fff',
+                            borderColor: '#667eea',
+                            borderWidth: 1,
+                            cornerRadius: 8,
+                            callbacks: {
+                                label: function(context) {
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = ((context.parsed.y / total) * 100).toFixed(1);
+                                    return `稽查次數: ${context.parsed.y} (${percentage}%)`;
+                                }
+                            }
+                        },
+                        datalabels: {
+                            anchor: 'end',
+                            align: 'top',
+                            offset: 5,
+                            color: '#2c3e50',
+                            font: { weight: 'bold', size: 13 },
+                            formatter: (value) => value,
+                            clip: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { 
+                                stepSize: 1,
+                                color: '#7f8c8d',
+                                font: { size: 11 }
+                            },
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)',
+                                drawBorder: false
+                            },
+                            max: function(context) {
+                                const values = context.chart.data.datasets[0].data;
+                                const max = Math.max(...values);
+                                return Math.ceil(max * 1.3);
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                color: '#0f0d0d',
+                                font: { size: 14, weight: 'bold' },
+                                maxRotation: 45
+                            },
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // 區域分布圖表
+            const areaCtx = document.getElementById('areaChart').getContext('2d');
+            const areaValues = Object.values(stats.areas);
+            const areaLabels = Object.keys(stats.areas);
+            const total = areaValues.reduce((a, b) => a + b, 0);
+            
+            charts.area = new Chart(areaCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: areaLabels,
+                    datasets: [{
+                        data: areaValues,
+                        backgroundColor: colorPalettes.primary.slice(0, areaLabels.length),
+                        borderColor: '#fff',
+                        borderWidth: 3,
+                        hoverBorderWidth: 5,
+                        hoverOffset: 10
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '60%',
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: {
+                                generateLabels: function(chart) {
+                                    const data = chart.data;
+                                    return data.labels.map((label, i) => {
+                                        const percentage = ((data.datasets[0].data[i] / total) * 100).toFixed(1);
+                                        return {
+                                            text: `${label} (${data.datasets[0].data[i]}次, ${percentage}%)`,
+                                            fillStyle: data.datasets[0].backgroundColor[i],
+                                            hidden: false,
+                                            index: i,
+                                            fontColor: '#2c3e50',
+                                            fontSize: 11
+                                        };
+                                    });
+                                },
+                                padding: 15,
+                                usePointStyle: true,
+                                pointStyle: 'circle'
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            titleColor: '#fff',
+                            bodyColor: '#fff',
+                            borderColor: '#667eea',
+                            borderWidth: 1,
+                            cornerRadius: 8,
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.parsed;
+                                    const percentage = ((value / total) * 100).toFixed(1);
+                                    return `${label}: ${value}次 (${percentage}%)`;
+                                }
+                            }
+                        },
+                        datalabels: {
+                            color: '#fff',
+                            font: { weight: 'bold', size: 11 },
+                            formatter: (value, ctx) => {
+                                const percentage = ((value / total) * 100).toFixed(0);
+                                return percentage > 8 ? `${percentage}%` : '';
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // H1指差執行情況圖表
+            const guidanceCtx = document.getElementById('guidanceChart').getContext('2d');
+            const guidanceLabels = ['皆有執行', '部分執行', '皆未執行', '不適用'];
+            const guidanceData = [stats.guidance['1'], stats.guidance['2'], stats.guidance['3'], stats.guidance['9']];
+            const guidanceColors = ['rgba(46, 204, 113, 0.8)', 'rgba(241, 196, 15, 0.8)', 'rgba(231, 76, 60, 0.8)', 'rgba(149, 165, 166, 0.8)'];
+            
+            charts.guidance = new Chart(guidanceCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: guidanceLabels,
+                    datasets: [{
+                        data: guidanceData,
+                        backgroundColor: guidanceColors,
+                        borderColor: '#fff',
+                        borderWidth: 3,
+                        hoverBorderWidth: 5,
+                        hoverOffset: 10
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '60%',
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                generateLabels: function(chart) {
+                                    const data = chart.data;
+                                    const total = data.datasets[0].data.reduce((a, b) => a + b, 0);
+                                    return data.labels.map((label, i) => {
+                                        const value = data.datasets[0].data[i];
+                                        const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : '0.0';
+                                        return {
+                                            text: `${label} (${value}次, ${percentage}%)`,
+                                            fillStyle: data.datasets[0].backgroundColor[i],
+                                            hidden: false,
+                                            index: i,
+                                            fontColor: '#2c3e50',
+                                            fontSize: 11
+                                        };
+                                    });
+                                },
+                                padding: 15,
+                                usePointStyle: true,
+                                pointStyle: 'circle'
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            titleColor: '#fff',
+                            bodyColor: '#fff',
+                            borderColor: '#667eea',
+                            borderWidth: 1,
+                            cornerRadius: 8,
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.parsed;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : '0.0';
+                                    return `${label}: ${value}次 (${percentage}%)`;
+                                }
+                            }
+                        },
+                        datalabels: {
+                            color: '#fff',
+                            font: { weight: 'bold', size: 12 },
+                            formatter: (value, ctx) => {
+                                const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = total > 0 ? ((value / total) * 100).toFixed(0) : '0';
+                                return percentage > 5 ? `${percentage}%` : '';
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // H2備註統計圖表
+            const remarksCtx = document.getElementById('remarksChart').getContext('2d');
+            const remarksData = Object.entries(stats.remarks).filter(([key, value]) => value > 0);
+            
+            charts.remarks = new Chart(remarksCtx, {
+                type: 'bar',
+                data: {
+                    labels: remarksData.map(([key, value]) => {
+                        const labels = {
+                            '慢': '慢看停',
+                            '無': '未執行',
+                            '線': '未依路線',
+                            '遊': '遊覽車型',
+                            '其他': '其他'
+                        };
+                        return labels[key] || key;
+                    }),
+                    datasets: [{
+                        label: '備註次數',
+                        data: remarksData.map(([key, value]) => value),
+                        backgroundColor: 'rgba(155, 89, 182, 0.8)',
+                        borderColor: 'rgba(155, 89, 182, 1)',
+                        borderWidth: 2,
+                        borderRadius: 6,
+                        borderSkipped: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    layout: {
+                        padding: { top: 40, right: 20, bottom: 10, left: 10 }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            titleColor: '#fff',
+                            bodyColor: '#fff',
+                            borderColor: '#9b59b6',
+                            borderWidth: 1,
+                            cornerRadius: 8
+                        },
+                        datalabels: {
+                            anchor: 'end',
+                            align: 'top',
+                            offset: 5,
+                            color: '#2c3e50',
+                            font: { weight: 'bold', size: 13 },
+                            formatter: (value) => value,
+                            clip: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { 
+                                stepSize: 1,
+                                color: '#7f8c8d',
+                                font: { size: 11 }
+                            },
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)',
+                                drawBorder: false
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                color: '#2c3e50',
+                                font: { size: 12, weight: 'bold' },
+                                maxRotation: 45
+                            },
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // 安全設備圖表
+            const safetyCtx = document.getElementById('safetyChart').getContext('2d');
+            const safetyLabels = [
+                '逃生門正常', '警告標示', '擊破器', '安全貼紙', '字體清晰',
+                '滅火器有效', '壓力正常', '放置適當', '使用說明', '座椅正常'
+            ];
+            const safetyData = [
+                stats.safety.normal, stats.safety.warning, stats.safety.breaker,
+                stats.safety.sticker, stats.safety.font, stats.safety.extinguisher,
+                stats.safety.pressure, stats.safety.placement, stats.safety.instruction, stats.safety.seat
+            ];
+            
+            charts.safety = new Chart(safetyCtx, {
+                type: 'radar',
+                data: {
+                    labels: safetyLabels,
+                    datasets: [{
+                        label: '符合數量',
+                        data: safetyData,
+                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        borderWidth: 3,
+                        pointBackgroundColor: 'rgba(75, 192, 192, 1)',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: 'rgba(75, 192, 192, 1)',
+                        pointRadius: 6,
+                        pointHoverRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    layout: { padding: 50 },
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: '#2c3e50',
+                                font: { size: 14, weight: 'bold' }
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            titleColor: '#fff',
+                            bodyColor: '#fff',
+                            borderColor: '#4bc0c0',
+                            borderWidth: 1,
+                            cornerRadius: 8,
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.dataset.label || '';
+                                    const value = context.parsed.r;
+                                    const percentage = ((value / stats.total) * 100).toFixed(1);
+                                    return `${label}: ${value}/${stats.total} (${percentage}%)`;
+                                }
+                            }
+                        },
+                        datalabels: {
+                            backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                            borderColor: 'rgba(75, 192, 192, 1)',
+                            borderRadius: 4,
+                            borderWidth: 1,
+                            color: '#2c3e50',
+                            font: { weight: 'bold', size: 11 },
+                            formatter: (value) => value,
+                            padding: 3,
+                            clip: false,
+                            anchor: 'center',
+                            align: 'center',
+                            offset: 0,
+                            display: function(context) {
+                                try {
+                                    return context && context.parsed && typeof context.parsed.r === 'number' && context.parsed.r > 0;
+                                } catch (e) {
+                                    return true;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        r: {
+                            beginAtZero: true,
+                            max: Math.ceil(stats.total * 1.1),
+                            ticks: {
+                                stepSize: Math.ceil(stats.total / 5),
+                                color: '#7f8c8d',
+                                font: { size: 12 },
+                                backdropColor: 'rgba(255, 255, 255, 0.8)',
+                                backdropPadding: 3
+                            },
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.1)'
+                            },
+                            angleLines: {
+                                color: 'rgba(0, 0, 0, 0.1)'
+                            },
+                            pointLabels: {
+                                color: '#2c3e50',
+                                font: { size: 13, weight: '600' },
+                                padding: 10,
+                                centerPointLabels: false
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateViolationTable(data, violationFields) {
+            const tbody = document.getElementById('violationTableBody');
+            tbody.innerHTML = '';
+            
+            data.forEach(row => {
+                const violations = [];
+                
+                for (let field in violationFields.equipment) {
+                    if (row[field] === '0' || row[field] === 0) {
+                        violations.push(violationFields.equipment[field]);
+                    }
+                }
+                
+                for (let field in violationFields.behavior) {
+                    if (row[field] === '1' || row[field] === 1) {
+                        violations.push(violationFields.behavior[field]);
+                    }
+                }
+                
+                // 獲取H1指差狀態
+                const guidanceStatus = row['H1 指差'];
+                let guidanceText = '';
+                switch(guidanceStatus) {
+                    case '1': guidanceText = '皆有執行'; break;
+                    case '2': guidanceText = '部分執行'; break;
+                    case '3': guidanceText = '皆未執行'; break;
+                    case '9': guidanceText = '不適用'; break;
+                    default: guidanceText = '-';
+                }
+                
+                // 獲取H2備註
+                const remarks = row['H2 備註'] || '-';
+                
+                const tr = document.createElement('tr');
+                let dateStr = '-';
+                if (row['日期']) {
+                    let date;
+                    if (typeof row['日期'] === 'object' && row['日期'] instanceof Date) {
+                        date = row['日期'];
+                    } else if (typeof row['日期'] === 'string') {
+                        if (row['日期'].indexOf('/') > 0 && row['日期'].split('/').length === 2) {
+                            date = new Date(`2024/${row['日期']}`);
+                        } else {
+                            date = new Date(row['日期']);
+                        }
+                    } else if (typeof row['日期'] === 'number') {
+                        date = new Date((row['日期'] - 25569) * 86400 * 1000);
+                    }
+                    
+                    if (date && !isNaN(date.getTime()) && date.getFullYear() >= 2000) {
+                        dateStr = date.toLocaleDateString('zh-TW');
+                    }
+                }
+                
+                if (violations.length > 0) {
+                    tr.classList.add('violation-row');
+                }
+                
+                tr.innerHTML = `
+                    <td>${row['編號'] || '-'}</td>
+                    <td>${dateStr}</td>
+                    <td>${row['路線'] || '-'}</td>
+                    <td>${row['公司'] || row['客運公司'] || '-'}</td>
+                    <td>${row['車牌'] || '-'}</td>
+                    <td>${row['駕駛'] || '-'}</td>
+                    <td><span class="guidance-status ${guidanceStatus === '1' ? 'good' : guidanceStatus === '3' ? 'bad' : 'warning'}">${guidanceText}</span></td>
+                    <td class="remarks-cell">${remarks}</td>
+                    <td>${violations.length > 0 ? violations.map(v => `<span class="violation">${v}</span>`).join(' ') : '<span class="normal">無違規</span>'}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+            
+            if (tbody.children.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; color: #7f8c8d; font-style: italic;">無稽查記錄</td></tr>';
+            }
+        }
+
+        function exportReport() {
+            if (!analysisData) return;
+            
+            const exportData = [];
+            const header = ['編號', '日期', '路線', '客運公司', '車牌', '駕駛', 'H1指差', 'H2備註', '違規項目數', '主要違規'];
+            
+            analysisData.forEach(row => {
+                const violations = [];
+                const violationFields = {
+                    equipment: {
+                        'A2 路線圖': '未張貼路線圖',
+                        'A3 意見箱': '無意見箱',
+                        'A4 電話': '無服務電話'
+                    },
+                    behavior: {
+                        'B4 吸菸': '駕駛吸菸',
+                        'C1 早發': '早發',
+                        'C2 誤點': '誤點',
+                        'C3 脫班': '脫班',
+                        'C4 漏班': '漏班',
+                        'C5 紀錄器': '行車紀錄器異常',
+                        'C6 過站': '過站不停',
+                        'C7 依路線': '未依路線行駛',
+                        'C8 拒載': '拒載',
+                        'C9 未停妥': '未停妥',
+                        'C10 關車門': '未等乘客坐穩關門',
+                        'C11 闖紅燈': '闖紅燈',
+                        'C12 佔用': '佔用車道',
+                        'C13 延滯': '延滯發車'
+                    }
+                };
+                
+                for (let field in violationFields.equipment) {
+                    if (row[field] === '0' || row[field] === 0) {
+                        violations.push(violationFields.equipment[field]);
+                    }
+                }
+                
+                for (let field in violationFields.behavior) {
+                    if (row[field] === '1' || row[field] === 1) {
+                        violations.push(violationFields.behavior[field]);
+                    }
+                }
+                
+                const guidanceStatus = row['H1 指差'];
+                let guidanceText = '';
+                switch(guidanceStatus) {
+                    case '1': guidanceText = '皆有執行'; break;
+                    case '2': guidanceText = '部分執行'; break;
+                    case '3': guidanceText = '皆未執行'; break;
+                    case '9': guidanceText = '不適用'; break;
+                    default: guidanceText = '-';
+                }
+                
+                exportData.push([
+                    row['編號'] || '',
+                    row['日期'] ? (new Date(row['日期']).getFullYear() > 1970 ? new Date(row['日期']).toLocaleDateString('zh-TW') : '') : '',
+                    row['路線'] || '',
+                    row['公司'] || row['客運公司'] || '',
+                    row['車牌'] || '',
+                    row['駕駛'] || '',
+                    guidanceText,
+                    row['H2 備註'] || '',
+                    violations.length,
+                    violations.join(', ')
+                ]);
+            });
+            
+            const wb = XLSX.utils.book_new();
+            
+            const summaryData = [
+                ['桃園公車稽查統計報告'],
+                [''],
+                ['報告日期', new Date().toLocaleDateString('zh-TW')],
+                ['總稽查次數', analysisData.length],
+                [''],
+                ['客運公司統計'],
+            ];
+            
+            const companies = {};
+            analysisData.forEach(row => {
+                const company = row['客運公司'] || row['公司'] || '未知';
+                companies[company] = (companies[company] || 0) + 1;
+            });
+            
+            for (let company in companies) {
+                summaryData.push([company, companies[company]]);
+            }
+            
+            summaryData.push([''], ['H1指差執行統計']);
+            const guidanceStats = {};
+            analysisData.forEach(row => {
+                const status = row['H1 指差'];
+                let statusText = '';
+                switch(status) {
+                    case '1': statusText = '皆有執行'; break;
+                    case '2': statusText = '部分執行'; break;
+                    case '3': statusText = '皆未執行'; break;
+                    case '9': statusText = '不適用'; break;
+                    default: statusText = '未記錄';
+                }
+                guidanceStats[statusText] = (guidanceStats[statusText] || 0) + 1;
+            });
+            
+            for (let status in guidanceStats) {
+                summaryData.push([status, guidanceStats[status]]);
+            }
+            
+            const ws1 = XLSX.utils.aoa_to_sheet(summaryData);
+            const ws2 = XLSX.utils.aoa_to_sheet([header, ...exportData]);
+            
+            XLSX.utils.book_append_sheet(wb, ws1, '統計摘要');
+            XLSX.utils.book_append_sheet(wb, ws2, '詳細記錄');
+            
+            const fileName = `稽查統計報告_${new Date().toLocaleDateString('zh-TW').replace(/\//g, '')}.xlsx`;
+            XLSX.writeFile(wb, fileName);
+            
+            alert(`報告已匯出: ${fileName}`);
+        }
+    </script>
 </body>
 </html>
