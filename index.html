@@ -357,7 +357,13 @@
                     normal: 0,
                     warning: 0,
                     breaker: 0,
-                    extinguisher: 0
+                    sticker: 0,
+                    font: 0,
+                    extinguisher: 0,
+                    pressure: 0,
+                    placement: 0,
+                    instruction: 0,
+                    seat: 0
                 }
             };
             
@@ -429,6 +435,7 @@
                 if (row['D5 字體'] === '1' || row['D5 字體'] === 1) stats.safety.font++;
                 if (row['E1 有效期'] === '1' || row['E1 有效期'] === 1) stats.safety.extinguisher++;
                 if (row['E2 壓力針'] === '1' || row['E2 壓力針'] === 1) stats.safety.pressure++;
+                // E3 放置特殊處理：1=皆有 才算符合
                 if (row['E3 放置'] === '1' || row['E3 放置'] === 1) stats.safety.placement++;
                 if (row['E4 說明'] === '1' || row['E4 說明'] === 1) stats.safety.instruction++;
                 if (row['F1 座椅'] === '1' || row['F1 座椅'] === 1) stats.safety.seat++;
@@ -584,14 +591,31 @@
             charts.safety = new Chart(safetyCtx, {
                 type: 'radar',
                 data: {
-                    labels: ['逃生門正常', '警告標示', '擊破器', '滅火器有效'],
+                    labels: [
+                        '逃生門正常',
+                        '警告標示',
+                        '擊破器',
+                        '安全貼紙',
+                        '字體清晰',
+                        '滅火器有效',
+                        '壓力正常',
+                        '放置適當',
+                        '使用說明',
+                        '座椅正常'
+                    ],
                     datasets: [{
                         label: '符合數量',
                         data: [
                             stats.safety.normal,
                             stats.safety.warning,
                             stats.safety.breaker,
-                            stats.safety.extinguisher
+                            stats.safety.sticker,
+                            stats.safety.font,
+                            stats.safety.extinguisher,
+                            stats.safety.pressure,
+                            stats.safety.placement,
+                            stats.safety.instruction,
+                            stats.safety.seat
                         ],
                         backgroundColor: 'rgba(75, 192, 192, 0.3)',
                         borderColor: 'rgba(75, 192, 192, 1)',
