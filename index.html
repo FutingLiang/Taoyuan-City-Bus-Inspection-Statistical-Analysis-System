@@ -6,6 +6,7 @@
     <title>桃園公車稽查統計分析系統</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -281,7 +282,7 @@
                             <th>編號</th>
                             <th>日期</th>
                             <th>路線</th>
-                            <th>客運公司</th>
+                            <th>公司</th>
                             <th>車牌</th>
                             <th>駕駛</th>
                             <th>主要違規項目</th>
@@ -299,6 +300,9 @@
         let analysisData = null;
         let charts = {};
         
+        // 註冊 DataLabels 插件
+        Chart.register(ChartDataLabels);
+        
         document.getElementById('fileInput').addEventListener('change', handleFileUpload);
         
         function handleFileUpload(e) {
@@ -311,11 +315,18 @@
             reader.onload = function(e) {
                 try {
                     const data = new Uint8Array(e.target.result);
-                    const workbook = XLSX.read(data, { type: 'array' });
+                    const workbook = XLSX.read(data, { 
+                        type: 'array',
+                        cellDates: true,  // 自動轉換日期
+                        dateNF: 'yyyy/mm/dd'  // 日期格式
+                    });
                     
                     // 讀取第一個工作表
                     const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-                    const jsonData = XLSX.utils.sheet_to_json(firstSheet);
+                    const jsonData = XLSX.utils.sheet_to_json(firstSheet, {
+                        raw: false,  // 格式化值
+                        dateNF: 'yyyy/mm/dd'
+                    });
                     
                     // 過濾出實際資料（有編號的列）
                     const realData = jsonData.filter(row => row['編號']);
@@ -504,13 +515,38 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
+                    layout: {
+                        padding: {
+                            top: 30,  // 增加上方padding，確保數值標籤不被裁切
+                            right: 10,
+                            bottom: 10,
+                            left: 10
+                        }
+                    },
                     plugins: {
-                        legend: { display: false }
+                        legend: { display: false },
+                        datalabels: {
+                            anchor: 'end',
+                            align: 'top',
+                            color: '#333',
+                            font: {
+                                weight: 'bold',
+                                size: 14
+                            },
+                            formatter: (value) => value,
+                            clip: false  // 防止標籤被裁切
+                        }
                     },
                     scales: {
                         y: {
                             beginAtZero: true,
-                            ticks: { stepSize: 1 }
+                            ticks: { stepSize: 1 },
+                            max: function(context) {
+                                // 設定最大值為最大數據值的 1.2 倍，確保標籤有空間
+                                const values = context.chart.data.datasets[0].data;
+                                const max = Math.max(...values);
+                                return Math.ceil(max * 1.2);
+                            }
                         }
                     }
                 }
@@ -518,12 +554,16 @@
             
             // 區域分布圖表
             const areaCtx = document.getElementById('areaChart').getContext('2d');
+            const areaValues = Object.values(stats.areas);
+            const areaLabels = Object.keys(stats.areas);
+            const total = areaValues.reduce((a, b) => a + b, 0);
+            
             charts.area = new Chart(areaCtx, {
                 type: 'doughnut',
                 data: {
-                    labels: Object.keys(stats.areas),
+                    labels: areaLabels,
                     datasets: [{
-                        data: Object.values(stats.areas),
+                        data: areaValues,
                         backgroundColor: [
                             'rgba(255, 99, 132, 0.8)',
                             'rgba(54, 162, 235, 0.8)',
@@ -546,7 +586,39 @@
                     maintainAspectRatio: false,
                     plugins: {
                         legend: {
-                            position: 'right'
+                            position: 'right',
+                            labels: {
+                                generateLabels: function(chart) {
+                                    const data = chart.data;
+                                    return data.labels.map((label, i) => ({
+                                        text: `${label} (${data.datasets[0].data[i]}次)`,
+                                        fillStyle: data.datasets[0].backgroundColor[i],
+                                        hidden: false,
+                                        index: i
+                                    }));
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.parsed;
+                                    const percentage = ((value / total) * 100).toFixed(1);
+                                    return `${label}: ${value}次 (${percentage}%)`;
+                                }
+                            }
+                        },
+                        datalabels: {
+                            color: '#fff',
+                            font: {
+                                weight: 'bold',
+                                size: 12
+                            },
+                            formatter: (value, ctx) => {
+                                const percentage = ((value / total) * 100).toFixed(0);
+                                return percentage > 5 ? `${value}\n(${percentage}%)` : '';
+                            }
                         }
                     }
                 }
@@ -574,13 +646,39 @@
                     responsive: true,
                     maintainAspectRatio: false,
                     indexAxis: 'y',
+                    layout: {
+                        padding: {
+                            top: 10,
+                            right: 40,  // 增加右邊padding，確保橫向長條圖的數值不被裁切
+                            bottom: 10,
+                            left: 10
+                        }
+                    },
                     plugins: {
-                        legend: { display: false }
+                        legend: { display: false },
+                        datalabels: {
+                            anchor: 'end',
+                            align: 'end',
+                            offset: 5,
+                            color: '#333',
+                            font: {
+                                weight: 'bold',
+                                size: 12
+                            },
+                            formatter: (value) => value,
+                            clip: false  // 防止標籤被裁切
+                        }
                     },
                     scales: {
                         x: {
                             beginAtZero: true,
-                            ticks: { stepSize: 1 }
+                            ticks: { stepSize: 1 },
+                            max: function(context) {
+                                // 設定最大值為最大數據值的 1.3 倍
+                                const values = context.chart.data.datasets[0].data;
+                                const max = Math.max(...values);
+                                return Math.ceil(max * 1.3);
+                            }
                         }
                     }
                 }
@@ -588,51 +686,91 @@
             
             // 安全設備圖表
             const safetyCtx = document.getElementById('safetyChart').getContext('2d');
+            const safetyLabels = [
+                '逃生門正常',
+                '警告標示',
+                '擊破器',
+                '安全貼紙',
+                '字體清晰',
+                '滅火器有效',
+                '壓力正常',
+                '放置適當',
+                '使用說明',
+                '座椅正常'
+            ];
+            const safetyData = [
+                stats.safety.normal,
+                stats.safety.warning,
+                stats.safety.breaker,
+                stats.safety.sticker,
+                stats.safety.font,
+                stats.safety.extinguisher,
+                stats.safety.pressure,
+                stats.safety.placement,
+                stats.safety.instruction,
+                stats.safety.seat
+            ];
+            
             charts.safety = new Chart(safetyCtx, {
                 type: 'radar',
                 data: {
-                    labels: [
-                        '逃生門正常',
-                        '警告標示',
-                        '擊破器',
-                        '安全貼紙',
-                        '字體清晰',
-                        '滅火器有效',
-                        '壓力正常',
-                        '放置適當',
-                        '使用說明',
-                        '座椅正常'
-                    ],
+                    labels: safetyLabels,
                     datasets: [{
                         label: '符合數量',
-                        data: [
-                            stats.safety.normal,
-                            stats.safety.warning,
-                            stats.safety.breaker,
-                            stats.safety.sticker,
-                            stats.safety.font,
-                            stats.safety.extinguisher,
-                            stats.safety.pressure,
-                            stats.safety.placement,
-                            stats.safety.instruction,
-                            stats.safety.seat
-                        ],
+                        data: safetyData,
                         backgroundColor: 'rgba(75, 192, 192, 0.3)',
                         borderColor: 'rgba(75, 192, 192, 1)',
                         borderWidth: 2,
                         pointBackgroundColor: 'rgba(75, 192, 192, 1)',
                         pointBorderColor: '#fff',
                         pointHoverBackgroundColor: '#fff',
-                        pointHoverBorderColor: 'rgba(75, 192, 192, 1)'
+                        pointHoverBorderColor: 'rgba(75, 192, 192, 1)',
+                        pointRadius: 5,
+                        pointHoverRadius: 7
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
+                    layout: {
+                        padding: 20  // 為雷達圖增加整體padding
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.dataset.label || '';
+                                    const value = context.parsed.r;
+                                    const percentage = ((value / stats.total) * 100).toFixed(1);
+                                    return `${label}: ${value}/${stats.total} (${percentage}%)`;
+                                }
+                            }
+                        },
+                        datalabels: {
+                            backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                            borderColor: 'rgba(75, 192, 192, 1)',
+                            borderRadius: 4,
+                            borderWidth: 1,
+                            color: '#333',
+                            font: {
+                                weight: 'bold',
+                                size: 10
+                            },
+                            formatter: (value) => value,
+                            padding: 3,
+                            clip: false,  // 防止標籤被裁切
+                            anchor: 'end',
+                            align: 'end',
+                            offset: 5
+                        }
+                    },
                     scales: {
                         r: {
                             beginAtZero: true,
-                            max: stats.total
+                            max: Math.ceil(stats.total * 1.1),  // 增加10%空間
+                            ticks: {
+                                stepSize: Math.ceil(stats.total / 5)
+                            }
                         }
                     }
                 }
@@ -662,11 +800,36 @@
                 
                 if (violations.length > 0) {
                     const tr = document.createElement('tr');
+                    // 處理日期顯示
+                    let dateStr = '-';
+                    if (row['日期']) {
+                        let date;
+                        // 處理不同的日期格式
+                        if (typeof row['日期'] === 'object' && row['日期'] instanceof Date) {
+                            date = row['日期'];
+                        } else if (typeof row['日期'] === 'string') {
+                            // 如果是 "1/22" 這種格式，補上年份
+                            if (row['日期'].indexOf('/') > 0 && row['日期'].split('/').length === 2) {
+                                date = new Date(`2024/${row['日期']}`);
+                            } else {
+                                date = new Date(row['日期']);
+                            }
+                        } else if (typeof row['日期'] === 'number') {
+                            // Excel 序列值
+                            date = new Date((row['日期'] - 25569) * 86400 * 1000);
+                        }
+                        
+                        // 驗證日期並格式化
+                        if (date && !isNaN(date.getTime()) && date.getFullYear() >= 2000) {
+                            dateStr = date.toLocaleDateString('zh-TW');
+                        }
+                    }
+                    
                     tr.innerHTML = `
                         <td>${row['編號'] || '-'}</td>
-                        <td>${row['日期'] ? new Date(row['日期']).toLocaleDateString('zh-TW') : '-'}</td>
+                        <td>${dateStr}</td>
                         <td>${row['路線'] || '-'}</td>
-                        <td>${row['客運公司'] || '-'}</td>
+                        <td>${row['公司'] || row['客運公司'] || '-'}</td>
                         <td>${row['車牌'] || '-'}</td>
                         <td>${row['駕駛'] || '-'}</td>
                         <td>${violations.map(v => `<span class="violation">${v}</span>`).join(' ')}</td>
@@ -717,9 +880,9 @@
                 
                 exportData.push([
                     row['編號'] || '',
-                    row['日期'] ? new Date(row['日期']).toLocaleDateString('zh-TW') : '',
+                    row['日期'] ? (new Date(row['日期']).getFullYear() > 1970 ? new Date(row['日期']).toLocaleDateString('zh-TW') : '') : '',
                     row['路線'] || '',
-                    row['客運公司'] || '',
+                    row['公司'] || row['客運公司'] || '',
                     row['車牌'] || '',
                     row['駕駛'] || '',
                     violations.length,
