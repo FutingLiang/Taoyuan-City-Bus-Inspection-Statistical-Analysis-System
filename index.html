@@ -425,7 +425,13 @@
                 if (row['D1 正常'] === '1' || row['D1 正常'] === 1) stats.safety.normal++;
                 if (row['D2 警告'] === '1' || row['D2 警告'] === 1) stats.safety.warning++;
                 if (row['D3 擊破器'] === '1' || row['D3 擊破器'] === 1) stats.safety.breaker++;
+                if (row['D4 貼紙'] === '1' || row['D4 貼紙'] === 1) stats.safety.sticker++;
+                if (row['D5 字體'] === '1' || row['D5 字體'] === 1) stats.safety.font++;
                 if (row['E1 有效期'] === '1' || row['E1 有效期'] === 1) stats.safety.extinguisher++;
+                if (row['E2 壓力針'] === '1' || row['E2 壓力針'] === 1) stats.safety.pressure++;
+                if (row['E3 放置'] === '1' || row['E3 放置'] === 1) stats.safety.placement++;
+                if (row['E4 說明'] === '1' || row['E4 說明'] === 1) stats.safety.instruction++;
+                if (row['F1 座椅'] === '1' || row['F1 座椅'] === 1) stats.safety.seat++;
             });
             
             // 更新統計卡片
